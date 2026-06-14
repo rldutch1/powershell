@@ -4,19 +4,31 @@
 # Creation Date: Fri Jun 12 2026 21:24:21 GMT-0700 (US Mountain Standard Time)
 # Last Modified: 
 # Copyright (c)2026
-# Purpose: Sort through a detailed medication administration CSV file and create a KOP list HTML table based on username.
+# Purpose: Sort through a detailed medication administration CSV file and 
+#          create a KOP (Keep On Person) list HTML table based on housing location.
 # ----------------------------------------------------------------------------
- 
 
 $csvPath  = "detailed-medication-administrations-DATE-HERE.csv"
 $outPath  = "KOPList.html"
-$tcusername = "Robert Holland Registered Nurse"
 
-# Import CSV, filter by username, and make ADC Number unique
+# Scalable housing patterns — add more anytime
+$patterns = @(
+    "L32-HU1C*",
+    "L32-HU1D*",
+    "L46-HU3B*",
+    "L63-HU3B*"
+)
+
+# Import CSV, filter by housing location using -like patterns, and make ADC Number unique
 $data = Import-Csv -Path $csvPath |
-    Where-Object { $_.UserName -eq $tcusername } |
-    Group-Object 'Patient Id' |                     # <-- Group by ADC Number
-    ForEach-Object { $_.Group | Select-Object -First 1 } |   # <-- Keep only one row per ADC
+    Where-Object {
+        foreach ($p in $patterns) {
+            if ($_. 'Current Housing Location' -like $p) { return $true }
+        }
+        return $false
+    } |
+    Group-Object 'Patient Id' |
+    ForEach-Object { $_.Group | Select-Object -First 1 } |
     Select-Object 'Patient Id','Patient Name','Current Housing Location'
 
 # Build HTML rows
@@ -45,20 +57,27 @@ $rows = foreach ($row in $data) {
     "</tr>"
 } -join "`n"
 
-# Full HTML with sortable columns
+# Full HTML with sortable columns + search bar
 $html = @"
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Filtered Patient Housing Dashboard</title>
+    <title>KOP List — Filtered by Housing Location</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
         th { cursor: pointer; background-color: #f2f2f2; }
         tr:nth-child(even) { background-color: #fafafa; }
+        #searchInput {
+            width: 300px;
+            padding: 8px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
     </style>
+
     <script>
         function sortTable(n) {
             var table = document.getElementById("patientTable");
@@ -103,10 +122,33 @@ $html = @"
                 }
             }
         }
+
+        // Search bar filter
+        function searchNames() {
+            var input = document.getElementById("searchInput");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("patientTable");
+            var tr = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < tr.length; i++) {
+                var td = tr[i].getElementsByTagName("td")[1]; // Patient Name column
+                if (td) {
+                    var txtValue = td.textContent || td.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
     </script>
 </head>
 <body>
-    <h2>Patient Housing Dashboard — $tcusername</h2>
+    <h2>KOP List — Housing Units: $(($patterns -join ", ").Replace("*",""))</h2>
+
+    <input type="text" id="searchInput" onkeyup="searchNames()" placeholder="Search patient names...">
+
     <table id="patientTable">
         <thead>
             <tr>
