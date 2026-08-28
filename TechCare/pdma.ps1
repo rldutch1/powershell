@@ -1,8 +1,9 @@
-﻿# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
 # Script Author: Robert Holland RN
 # Script Name: pdma.ps1
 # Creation Date: Thu Jun 04 2026 15:32:39 GMT-0700 (US Mountain Standard Time)
-# Last Modified: 
+# Last Modified: Wed Aug 26 2026 08:24:00 GMT-0700 (US Mountain Standard Time)
 # Copyright (c)2026
 # Purpose: Parse the detailed medication administration .csv file and generate a Gabapentin and Suboxone report based on username.
 # Purpose: Parse detailed medication administration CSV and generate
@@ -13,21 +14,20 @@
 #   CONFIGURATION
 # -----------------------------------------
 
+# Enter date ONE time here
+$eldateo = Get-Date "08-25-2026"
+
 # Detailed Medication Administration filename
-$dma = "detailed-medication-administrations-06-01-2026.csv"
+#$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-07-13-2026.csv"
+$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-$($eldateo.ToString('MM-dd-yyyy')).csv"
+$TextFile = "C:\Users\robert.holland\Downloads\PendingPharmacyDelivery-$($eldateo.ToString('MM-dd-yyyy')).txt"
 
 # Medication Administration Date
-$mad = "6/1/2026"
+#$mad = "7/13/2026"
+$mad = $eldateo.ToString("M/d/yyyy")
 
 # TechCare Username
 $tcusername = "Robert Holland Registered Nurse"
-
-# Create timestamped log filename
-$timestamp = (Get-Date).ToString("yyyy-MM-dd_HHmmss")
-$reportFile = "final_medication_report_$timestamp.html"
-
-# Import CSV
-$data = Import-Csv $dma
 
 # -----------------------------------------
 #   BEGINNING INVENTORY COUNTS
@@ -35,17 +35,17 @@ $data = Import-Csv $dma
 
 # Gabapentin beginning counts
 $BeginCounts = @{
-    100 = 5000
-    300 = 3000
-    400 = 2000
-    600 = 1500
-    800 = 1000
+    100 = 1051 #
+    300 = 522 #
+    400 = 141 #
+    600 = 63 #
+    800 = 171 #
 }
 
 # Buprenorphine/Naloxone beginning counts
 $BupeBeginCounts = @{
-    "8-2"   = 1200
-    "2-0.5" = 1300
+    "8-2"   = 445# 
+    "2-0.5" = 95# 
 }
 
 $GabapentinWaste = @{
@@ -60,6 +60,13 @@ $BupeWaste = @{
     "8-2"   = 0
     "2-0.5" = 0
 }
+
+# Create timestamped log filename
+$timestamp = (Get-Date).ToString("yyyy-MM-dd_HHmmss")
+$reportFile = "final_medication_report_$timestamp.html"
+
+# Import CSV
+$data = Import-Csv $dma
 
 # -----------------------------------------
 #   FILTER: GABAPENTIN
@@ -78,7 +85,9 @@ $gabapentin = $data | Where-Object {
 $bupe = $data | Where-Object {
     $_."UserName" -like $tcusername -and
     $_."drug name" -eq "Buprenorphine HCl-Naloxone HCl Sublingual" -and
-    $_."Drug Strength" -eq "8-2" -and
+    $_."Drug Strength" -like "8-2" -and
+    $_."Administration Type" -ne "Refused" -and
+    $_."Administration Type" -ne "Administration Cancelled" -and
     ([datetime]$_."Administration Date").Date -eq (Get-Date $mad).Date
 }
 
@@ -89,6 +98,8 @@ $bupeLow = $data | Where-Object {
     $_."UserName" -like $tcusername -and
     $_."drug name" -eq "Buprenorphine HCl-Naloxone HCl Sublingual" -and
     $_."Drug Strength" -eq "2-0.5" -and
+    $_."Administration Type" -ne "Refused" -and
+    $_."Administration Type" -ne "Administration Cancelled" -and
     ([datetime]$_."Administration Date").Date -eq (Get-Date $mad).Date
 }
 
@@ -99,12 +110,13 @@ $bupeLow = $data | Where-Object {
 $htmlHeader = @"
 <html>
 <head>
-<title>Medication Administration Report</title>
+<title>$($eldateo.ToString('M/d/yyyy')) $tcusername Medication Administration Report</title>
 
 <style>
 body {
     font-family: Arial, sans-serif;
     margin: 20px;
+    font-size: 16px;
 }
 h2 {
     border-bottom: 2px solid #444;
@@ -112,8 +124,9 @@ h2 {
 }
 table {
     border-collapse: collapse;
-    width: 100%;
+    width: 80%;
     margin-bottom: 25px;
+    font-size: 12px;
 }
 th, td {
     border: 1px solid #999;
@@ -179,7 +192,7 @@ function sortTable(tableId, colIndex) {
 
 </head>
 <body>
-<h1>$tcusername Medication Administration Report</h1>
+<h1>$mad $tcusername Medication Administration Report</h1>
 "@
 
 $htmlFooter = "</body></html>"
@@ -218,7 +231,7 @@ function Convert-ToSortableHtmlTable {
             $html += "<td><a href='$link' target='_blank'>$value</a></td>"
             }
             else {
-        $html += "<td>$value</td>"
+        $html += "<td contenteditable='true'>$value</td>"
             }
         }
         $html += "</tr>"
@@ -241,14 +254,14 @@ $gabData = $gabapentin | Sort-Object {[int]$_."Drug Strength"} |
 $html += Convert-ToSortableHtmlTable -TableId "gabapentinTable" -Data $gabData
 
 # --- Gabapentin Waste ---
-$html += "<h3>Gabapentin Waste Summary</h3>"
+#$html += "<h3>Gabapentin Waste Summary</h3>"
 $wasteRows = foreach ($s in $GabapentinWaste.Keys) {
     [PSCustomObject]@{
         Strength = $s
         Wasted   = $GabapentinWaste[$s]
     }
 }
-$html += Convert-ToSortableHtmlTable -TableId "gabWaste" -Data $wasteRows
+#$html += Convert-ToSortableHtmlTable -TableId "gabWaste" -Data $wasteRows
 
 # --- Bupe 8-2 ---
 $html += "<h2>Buprenorphine/Naloxone 8-2 mg Administration Report</h2>"
@@ -262,15 +275,15 @@ $bupeLowData = $bupeLow | Sort-Object "Patient Name" |
     Select-Object "Patient Name","Patient Id","drug name","Drug Strength","quantity","Administration Date","UserName"
 $html += Convert-ToSortableHtmlTable -TableId "bupe205" -Data $bupeLowData
 
-# --- Bupe Waste ---
-$html += "<h3>Buprenorphine/Naloxone Waste Summary</h3>"
-$bupeWasteRows = foreach ($s in $BupeWaste.Keys) {
-    [PSCustomObject]@{
-        Strength = $s
-        Wasted   = $BupeWaste[$s]
-    }
-}
-$html += Convert-ToSortableHtmlTable -TableId "bupeWaste" -Data $bupeWasteRows
+## --- Bupe Waste ---
+#$html += "<h3>Buprenorphine/Naloxone Waste Summary</h3>"
+#$bupeWasteRows = foreach ($s in $BupeWaste.Keys) {
+#    [PSCustomObject]@{
+#        Strength = $s
+#        Wasted   = $BupeWaste[$s]
+#    }
+#}
+#$html += Convert-ToSortableHtmlTable -TableId "bupeWaste" -Data $bupeWasteRows
 
 # --- Inventory Summaries ---
 $html += "<h2>Gabapentin Inventory Summary</h2>"
@@ -323,3 +336,44 @@ $html += $htmlFooter
 $html | Out-File $reportFile -Encoding UTF8
 
 Start-Process $reportFile
+
+
+## Filter for Pending Pharmacy Delivery and print list.
+#$Results = Import-Csv -Path $dma | Where-Object {
+#    $_.'Administration Type' -eq 'Pending Pharmacy Delivery' -and
+#    $_.'UserName' -eq 'Robert Holland Registered Nurse'
+#}
+
+$Results = Import-Csv -Path $dma |
+Where-Object {
+$_.'Administration Type' -eq 'Pending Pharmacy Delivery' -and
+#$_.'UserName' -eq 'Robert Holland Registered Nurse'
+$_.'UserName' -eq $tcusername
+} |
+Sort-Object 'Patient Name', 'Drug Name'
+
+
+# Create a print-friendly report
+@(
+    "Pending Pharmacy Delivery Report"
+#    "User: Robert Holland Registered Nurse"
+    "User: $tcusername"
+    "Generated: $(Get-Date)"
+    ("=" * 100)
+    ""
+    $Results | Format-Table `
+        'Patient Name',
+        'Patient Id',
+        'Drug Name',
+        'Drug Strength',
+        'Current Housing Location'#,
+        #'Administration Date',
+        #'Provider' -AutoSize | Out-String
+    ""
+    "Total Records: $($Results.Count)"
+) | Out-File -FilePath $TextFile -Encoding UTF8
+
+Write-Host "Report saved to: $TextFile"
+
+# Optional: Open the report in Notepad
+notepad.exe $TextFile
