@@ -1,9 +1,8 @@
-
 # ----------------------------------------------------------------------------
 # Script Author: Robert Holland RN
 # Script Name: pdma.ps1
 # Creation Date: Thu Jun 04 2026 15:32:39 GMT-0700 (US Mountain Standard Time)
-# Last Modified: Wed Aug 26 2026 08:24:00 GMT-0700 (US Mountain Standard Time)
+# Last Modified: 
 # Copyright (c)2026
 # Purpose: Parse the detailed medication administration .csv file and generate a Gabapentin and Suboxone report based on username.
 # Purpose: Parse detailed medication administration CSV and generate
@@ -15,19 +14,42 @@
 # -----------------------------------------
 
 # Enter date ONE time here
-$eldateo = Get-Date "08-25-2026"
-
-# Detailed Medication Administration filename
-#$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-07-13-2026.csv"
-$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-$($eldateo.ToString('MM-dd-yyyy')).csv"
-$TextFile = "C:\Users\robert.holland\Downloads\PendingPharmacyDelivery-$($eldateo.ToString('MM-dd-yyyy')).txt"
-
-# Medication Administration Date
-#$mad = "7/13/2026"
-$mad = $eldateo.ToString("M/d/yyyy")
+$thedate = Get-Date "09-09-2026"
 
 # TechCare Username
 $tcusername = "Robert Holland Registered Nurse"
+
+#Gabapentin beginning count:
+    $G100mg = 500
+    $G300mg = 500 
+    $G400mg = 500
+    $G600mg = 500
+    $G800mg = 500
+
+#Suboxone beginning count:
+    $SUB_2mg = 500
+    $SUB_8mg = 500
+
+#Gabapentin wasted:
+    $GWASTE100mg = 0
+    $GWASTE300mg = 0
+    $GWASTE400mg = 0
+    $GWASTE600mg = 0
+    $GWASTE800mg = 0
+
+#Suboxone wasted:
+    $SUBWASTE_2mg = 0
+    $SUBWASTE_8mg = 0
+
+# ----------------------------------------------------------------------------
+# Detailed Medication Administration filename
+#$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-07-13-2026.csv"
+$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-$($thedate.ToString('MM-dd-yyyy')).csv"
+$TextFile = "C:\Users\robert.holland\Downloads\PendingPharmacyDelivery-$($thedate.ToString('MM-dd-yyyy')).txt"
+
+# Medication Administration Date
+#$mad = "7/13/2026"
+$mad = $thedate.ToString("M/d/yyyy")
 
 # -----------------------------------------
 #   BEGINNING INVENTORY COUNTS
@@ -35,30 +57,30 @@ $tcusername = "Robert Holland Registered Nurse"
 
 # Gabapentin beginning counts
 $BeginCounts = @{
-    100 = 1051 #
-    300 = 522 #
-    400 = 141 #
-    600 = 63 #
-    800 = 171 #
+    100 = $G100mg #
+    300 = $G300mg #
+    400 = $G400mg #
+    600 = $G600mg #
+    800 = $G800mg #
 }
 
 # Buprenorphine/Naloxone beginning counts
-$BupeBeginCounts = @{
-    "8-2"   = 445# 
-    "2-0.5" = 95# 
+$BupeBeginCounts = @{ 
+    "2-0.5" = $SUB_2mg#
+    "8-2"   = $SUB_8mg# 
 }
 
 $GabapentinWaste = @{
-    100 = 0
-    300 = 0
-    400 = 0
-    600 = 0
-    800 = 0
+    100 = $GWASTE100mg
+    300 = $GWASTE300mg
+    400 = $GWASTE400mg
+    600 = $GWASTE600mg
+    800 = $GWASTE800mg
 }
 
 $BupeWaste = @{
-    "8-2"   = 0
-    "2-0.5" = 0
+    "2-0.5" = $SUBWASTE_2mg
+    "8-2" = $SUBWASTE_8mg
 }
 
 # Create timestamped log filename
@@ -74,6 +96,7 @@ $data = Import-Csv $dma
 
 $gabapentin = $data | Where-Object {
     $_."UserName" -like $tcusername -and
+    #$_."drug name" -eq "Morphine Sulfate ER Oral" -and
     $_."drug name" -eq "Gabapentin Oral" -and
     ([int]$_."Drug Strength") -in 100,300,400,600,800 -and
     ([datetime]$_."Administration Date").Date -eq (Get-Date $mad).Date
@@ -110,7 +133,7 @@ $bupeLow = $data | Where-Object {
 $htmlHeader = @"
 <html>
 <head>
-<title>$($eldateo.ToString('M/d/yyyy')) $tcusername Medication Administration Report</title>
+<title>$($thedate.ToString('M/d/yyyy')) $tcusername Medication Administration Report</title>
 
 <style>
 body {
@@ -377,3 +400,4 @@ Write-Host "Report saved to: $TextFile"
 
 # Optional: Open the report in Notepad
 notepad.exe $TextFile
+
