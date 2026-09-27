@@ -44,9 +44,8 @@ $tcusername = "Robert Holland Registered Nurse"
 
 # ----------------------------------------------------------------------------
 # Detailed Medication Administration filename
-#$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-07-13-2026.csv"
-$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-$($thedate.ToString('MM-dd-yyyy')).csv"
-$TextFile = "C:\Users\robert.holland\Downloads\PendingPharmacyDelivery-$($thedate.ToString('MM-dd-yyyy')).txt"
+$dma = "$env:USERPROFILE/Downloads/detailed-medication-administrations-$($thedate.ToString('MM-dd-yyyy')).csv"
+$TextFile = "$env:USERPROFILE\Downloads\PendingPharmacyDelivery-$($thedate.ToString('MM-dd-yyyy')).txt"
 
 # Medication Administration Date
 #$mad = "7/13/2026"
