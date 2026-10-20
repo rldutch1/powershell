@@ -1,4 +1,4 @@
-﻿
+
 # ----------------------------------------------------------------------------
 # Script Author: Robert Holland RN
 # Script Name: pdma.ps1
@@ -15,21 +15,21 @@
 # -----------------------------------------
 
 # Enter date ONE time here
-$thedate = Get-Date "09-13-2026"
+$thedate = Get-Date "10-19-2026"
 
 # TechCare Username
 $tcusername = "Robert Holland Registered Nurse"
 
 #Suboxone beginning count:
-    $SUB_2mg = 192
-    $SUB_8mg = 1533
+    $SUB_2mg = 138
+    $SUB_8mg = 2718
 
 #Gabapentin beginning count:
-    $G_100mg = 936
-    $G_300mg = 512 
-    $G_400mg = 156
-    $G_600mg = 384
-    $G_800mg = 393
+    $G_100mg = 794
+    $G_300mg = 1086 
+    $G_400mg = 271
+    $G_600mg = 870
+    $G_800mg = 227
 
 #Gabapentin wasted:
     $G_WASTE100mg = 0
@@ -44,9 +44,8 @@ $tcusername = "Robert Holland Registered Nurse"
 
 # ----------------------------------------------------------------------------
 # Detailed Medication Administration filename
-#$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-07-13-2026.csv"
-$dma = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-$($thedate.ToString('MM-dd-yyyy')).csv"
-$TextFile = "C:\Users\robert.holland\Downloads\PendingPharmacyDelivery-$($thedate.ToString('MM-dd-yyyy')).txt"
+$dma = "$env:USERPROFILE/Downloads/detailed-medication-administrations-$($thedate.ToString('MM-dd-yyyy')).csv"
+$TextFile = "$env:USERPROFILE\Downloads\PendingPharmacyDelivery-$($thedate.ToString('MM-dd-yyyy')).txt"
 
 # Medication Administration Date
 #$mad = "7/13/2026"
@@ -137,6 +136,73 @@ $htmlHeader = @"
 <title>$($thedate.ToString('M/d/yyyy')) $tcusername Medication Administration Report</title>
 
 <style>
+#printBtn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+@media print {
+
+    @page {
+        size: landscape;
+        margin: 0.25in;
+    }
+
+    /* Hide print button */
+    #printBtn {
+        display: none;
+    }
+
+    body {
+        margin: 0;
+        font-size: 9px;
+    }
+
+    h1 {
+        font-size: 12px;
+        margin: 0 0 4px 0;
+    }
+
+    h2 {
+        font-size: 10px;
+        margin: 4px 0 2px 0;
+        padding-bottom: 1px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+        font-size: 8px;
+        margin-bottom: 6px;
+    }
+
+    th, td {
+        border: 1px solid #999;
+        padding: 1px 2px;
+        line-height: 1.0;
+        white-space: nowrap;
+    }
+
+    a {
+        color: black;
+        text-decoration: none;
+    }
+
+    .signature-section {
+        margin-top: 5px;
+    }
+
+    .signature-label {
+        font-size: 8px;
+    }
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 20px;
@@ -144,7 +210,7 @@ body {
 }
 h2 {
     border-bottom: 2px solid #444;
-    padding-bottom: 4px;
+    padding-bottom: 2px;
 }
 table {
     border-collapse: collapse;
@@ -154,7 +220,7 @@ table {
 }
 th, td {
     border: 1px solid #999;
-    padding: 6px;
+    padding: 2px;
     text-align: left;
 }
 th {
@@ -166,10 +232,10 @@ tr:nth-child(even) {
 }
 .signature-section {
 margin-top: 30px;
-text-align: center;
+text-align: left;
 }
 .signature-section img {
-max-width: 600px;
+max-width: 150px;
 height: auto;
 }
 .signature-label {
@@ -225,10 +291,17 @@ function sortTable(tableId, colIndex) {
         }
     }
 }
+
+function printReport() {
+    window.print();
+}
 </script>
 
 </head>
 <body>
+<button id="printBtn" onclick="printReport()">
+Print Report
+</button>
 <h1>$mad $tcusername Medication Administration Report</h1>
 "@
 
@@ -1248,7 +1321,7 @@ $gabCounts = $gabapentin |
             "Total Wasted"       = $waste
             "End Count"          = $end
         })
-    }
+    } | Sort-Object Strength
 
 $html += Convert-ToSortableHtmlTable -TableId "gabInventory" -Data $gabCounts
 
@@ -1270,7 +1343,8 @@ $bupeCounts = $bupeAll |
             "Total Wasted"       = $waste
             "End Count"          = $end
         })
-    }
+    } | Sort-Object Strength
+
 $html += Convert-ToSortableHtmlTable -TableId "bupeInventory" -Data $bupeCounts
 
 # -----------------------------------------
@@ -1337,3 +1411,4 @@ Write-Host "Report saved to: $TextFile"
 
 # Optional: Open the report in Notepad
 notepad.exe $TextFile
+
