@@ -1,4 +1,4 @@
-﻿
+
 # ----------------------------------------------------------------------------
 # Script Author: Robert Holland 
 # Script Name: KOPList.ps1
@@ -10,7 +10,7 @@
 # ----------------------------------------------------------------------------
 
 # Enter date ONE time here
-$eldateo = Get-Date "09-07-2026"
+$eldateo = Get-Date "10-20-2026"
 
 
 #$csvPath = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-08-22-2026.csv"
@@ -55,10 +55,10 @@ $rows = foreach ($row in $data) {
                    text-decoration:none;
                    font-weight:bold;
                    border-radius:4px;'>
-            View in TechCare $adc
+            View in TechCare
          </a>
      </td>" +
-    "<td>$($row.'Patient Name')</td>" +
+    "<td>$($row.'Patient Name') ($adc)</td>" +
     "<td>$($row.'Current Housing Location')</td>" +
     "</tr>"
 } -join "`n"
@@ -158,8 +158,8 @@ $html = @"
     <table id="patientTable">
         <thead>
             <tr>
-                <th onclick="sortTable(0)">ADC Number</th>
-                <th onclick="sortTable(1)">Patient Name</th>
+                <th onclick="sortTable(0)">TechCare</th>
+                <th onclick="sortTable(1)">Patient Name and ADC</th>
                 <th onclick="sortTable(2)">Current Housing Location</th>
             </tr>
         </thead>
@@ -176,4 +176,3 @@ $html | Set-Content -Path $outPath -Encoding UTF8
 
 Write-Host "Filtered HTML dashboard generated at $outPath"
 Start-Process $outPath #"KOPList.html"
-
