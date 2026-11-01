@@ -10,7 +10,7 @@
 # ----------------------------------------------------------------------------
 
 # Enter date ONE time here
-$eldateo = Get-Date "10-20-2026"
+$eldateo = Get-Date "10-26-2026"
 
 
 #$csvPath = "C:/Users/robert.holland/Downloads/detailed-medication-administrations-08-22-2026.csv"
@@ -55,7 +55,7 @@ $rows = foreach ($row in $data) {
                    text-decoration:none;
                    font-weight:bold;
                    border-radius:4px;'>
-            View in TechCare
+           $($adc) View in TechCare
          </a>
      </td>" +
     "<td>$($row.'Patient Name') ($adc)</td>" +
